@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GeoConsent — Конструктор</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap');
+
+    :root {
+      --bg: #080808;
+      --panel: #101010;
+      --surface: #161616;
+      --border: rgba(255,255,255,0.07);
+      --border2: rgba(255,255,255,0.12);
+      --text: #e0e0e0;
+      --muted: #666;
+      --muted2: #444;
+      --accent: #c8f135;
+      --accent-dim: rgba(200,241,53,0.12);
+      --font: 'DM Sans', system-ui, sans-serif;
+      --mono: 'DM Mono', 'Courier New', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      height: 52px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 24px;
+      flex-shrink: 0;
+      background: var(--panel);
+    }
+    .topbar-logo {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: #fff;
+    }
+    .topbar-logo span { color: var(--accent); }
+    .topbar-tag {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid rgba(200,241,53,0.2);
+      padding: 2px 8px;
+      border-radius: 20px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .topbar-spacer { flex: 1; }
+    .topbar-hint {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ── LAYOUT ── */
+    .layout {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    /* ── LEFT PANEL ── */
+    .left {
+      width: 340px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      overflow-x: hidden;
+      background: var(--panel);
+      scrollbar-width: thin;
+      scrollbar-color: var(--muted2) transparent;
+    }
+    .left::-webkit-scrollbar { width: 4px; }
+    .left::-webkit-scrollbar-thumb { background: var(--muted2); border-radius: 4px; }
+
+    .section {
+      border-bottom: 1px solid var(--border);
+      padding: 20px;
+    }
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    /* ── REGION PILLS ── */
+    .region-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .pill {
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border2);
+      background: var(--surface);
+      color: #999;
+      font-family: var(--font);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .pill:hover { border-color: rgba(255,255,255,0.2); color: #ccc; }
+    .pill.active {
+      background: var(--accent);
+      color: #0a0a0a;
+      border-color: transparent;
+      font-weight: 600;
+    }
+
+    /* ── TOGGLE SWITCH ── */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .toggle-label {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.4;
+    }
+    .toggle-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .toggle {
+      width: 40px;
+      height: 22px;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 11px;
+      cursor: pointer;
+      position: relative;
+      flex-shrink: 0;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .toggle::after {
+      content: '';
+      position: absolute;
+      width: 16px; height: 16px;
+      background: var(--muted);
+      border-radius: 50%;
+      top: 2px; left: 2px;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .toggle.on {
+      background: var(--accent-dim);
+      border-color: rgba(200,241,53,0.3);
+    }
+    .toggle.on::after {
+      transform: translateX(18px);
+      background: var(--accent);
+    }
+
+    /* ── SLIDER ── */
+    .slider-row {
+      margin-top: 14px;
+      display: none;
+    }
+    .slider-row.visible { display: block; }
+    .slider-row label {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .slider-row label span { color: var(--accent); font-weight: 600; }
+    input[type=range] {
+      width: 100%;
+      appearance: none;
+      height: 4px;
+      background: var(--surface);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+      border: 1px solid var(--border2);
+    }
+    input[type=range]::-webkit-slider-thumb {
+      appearance: none;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+      cursor: pointer;
+    }
+
+    /* ── THEME SWITCHER ── */
+    .theme-options {
+      display: flex;
+      gap: 8px;
+    }
+    .theme-opt {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border2);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .theme-opt:hover { border-color: rgba(255,255,255,0.2); }
+    .theme-opt.active { border-color: var(--accent); background: var(--accent-dim); }
+    .theme-swatch {
+      width: 36px; height: 24px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .theme-opt-label { font-size: 11px; font-weight: 500; color: var(--muted); }
+    .theme-opt.active .theme-opt-label { color: var(--accent); }
+
+    /* ── ACCENT PRESETS ── */
+    .accent-grid {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .accent-swatch {
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.15s;
+      position: relative;
+    }
+    .accent-swatch.active {
+      border-color: #fff;
+      transform: scale(1.15);
+    }
+    .accent-swatch:hover { transform: scale(1.1); }
+    .accent-custom {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: 4px;
+    }
+    .accent-hex {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: 5px 10px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .accent-hex:focus { border-color: rgba(255,255,255,0.25); }
+    input[type=color] {
+      width: 28px; height: 28px;
+      padding: 0;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: none;
+    }
+    input[type=color]::-webkit-color-swatch-wrapper { padding: 0; }
+    input[type=color]::-webkit-color-swatch { border-radius: 6px; border: 1px solid var(--border2); }
+
+    /* ── POSITION GRID ── */
+    .pos-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .pos-opt {
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border2);
+      background: var(--surface);
+      color: #888;
+      font-size: 11.5px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .pos-opt:hover { color: #ccc; border-color: rgba(255,255,255,0.2); }
+    .pos-opt.active { background: var(--accent-dim); border-color: rgba(200,241,53,0.3); color: var(--accent); }
+    .pos-opt.wide { grid-column: span 2; }
+
+    /* ── URL INPUT ── */
+    .url-input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: 9px 12px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .url-input:focus { border-color: rgba(255,255,255,0.25); }
+
+    /* ── RIGHT PANEL ── */
+    .right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── PREVIEW ── */
+    .preview-wrap {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: #0d0d0d;
+    }
+    /* Dot grid background */
+    .preview-wrap::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+      background-size: 24px 24px;
+      pointer-events: none;
+    }
+
+    .preview-label {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted2);
+      pointer-events: none;
+    }
+
+    /* Mock browser chrome */
+    .browser-mock {
+      position: absolute;
+      inset: 32px;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #141414;
+      display: flex;
+      flex-direction: column;
+    }
+    .browser-bar {
+      height: 36px;
+      background: #1c1c1c;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .browser-dots { display: flex; gap: 5px; }
+    .browser-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .browser-dot:nth-child(1) { background: #ff5f56; }
+    .browser-dot:nth-child(2) { background: #ffbd2e; }
+    .browser-dot:nth-child(3) { background: #27c93f; }
+    .browser-url {
+      flex: 1;
+      height: 20px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      font-size: 10px;
+      font-family: var(--mono);
+      color: var(--muted);
+      letter-spacing: 0;
+    }
+    .browser-content {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    /* Fake page content lines */
+    .page-lines {
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      opacity: 0.25;
+    }
+    .pl { height: 8px; background: rgba(255,255,255,0.15); border-radius: 4px; }
+
+    /* Banner preview inside browser */
+    #preview-banner {
+      position: absolute;
+      max-width: 320px;
+      width: calc(100% - 32px);
+      font-family: var(--font);
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    #preview-banner.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    #preview-banner.pos-br { bottom: 16px; right: 16px; left: auto; }
+    #preview-banner.pos-bl { bottom: 16px; left: 16px; right: auto; }
+    #preview-banner.pos-bc { bottom: 16px; left: 50%; transform: translateX(-50%); }
+    #preview-banner.pos-bc.visible { transform: translateX(-50%) translateY(0); }
+
+    .pv-card {
+      border-radius: 12px;
+      padding: 14px;
+      border: 1px solid;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    .pv-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .pv-ico { width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .pv-ico svg { width: 11px; height: 11px; }
+    .pv-title { font-size: 11px; font-weight: 600; line-height: 1.2; }
+    .pv-badge { margin-left: auto; font-size: 8px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; padding: 1px 5px; border-radius: 10px; flex-shrink: 0; }
+    .pv-msg { font-size: 10px; line-height: 1.5; margin-bottom: 8px; }
+    .pv-msg a { text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.2); }
+    .pv-detail { font-size: 9px; line-height: 1.4; margin-bottom: 8px; padding: 6px 8px; border-left: 2px solid; border-radius: 0 4px 4px 0; opacity: 0.7; }
+    .pv-btns { display: flex; gap: 6px; }
+    .pv-btn { flex: 1; padding: 6px 8px; border-radius: 7px; border: none; font-family: var(--font); font-size: 10px; font-weight: 500; cursor: default; }
+    .pv-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 2px; border-radius: 0 0 0 12px; opacity: 0.4; }
+
+    /* ── CODE OUTPUT ── */
+    .code-section {
+      flex-shrink: 0;
+      border-top: 1px solid var(--border);
+      background: var(--panel);
+    }
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .code-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .copy-btn {
+      padding: 5px 14px;
+      border-radius: 7px;
+      border: 1px solid var(--border2);
+      background: var(--surface);
+      color: #bbb;
+      font-family: var(--font);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .copy-btn:hover { border-color: rgba(255,255,255,0.25); color: #fff; }
+    .copy-btn.copied { background: var(--accent-dim); border-color: rgba(200,241,53,0.3); color: var(--accent); }
+
+    .code-body {
+      padding: 16px 20px;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.7;
+      overflow-x: auto;
+      white-space: pre;
+    }
+    .ck  { color: #666; }   /* keyword */
+    .cn  { color: #7dd3fc; } /* name */
+    .cs  { color: #86efac; } /* string */
+    .cv  { color: #c8f135; } /* value/number */
+    .cc  { color: #555; }    /* comment */
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-logo">Geo<span>Consent</span></div>
+  <div class="topbar-tag">Конструктор</div>
+  <div class="topbar-spacer"></div>
+  <div class="topbar-hint">Изменения применяются мгновенно →</div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- ══════ LEFT: SETTINGS ══════ -->
+  <div class="left">
+
+    <!-- РЕГИОН ПРЕВЬЮ -->
+    <div class="section">
+      <div class="section-title">Регион для превью</div>
+      <div class="region-pills">
+        <div class="pill active" data-region="ru">🇷🇺 RU</div>
+        <div class="pill" data-region="eu">🇪🇺 EU / GDPR</div>
+        <div class="pill" data-region="us">🇺🇸 US / CCPA</div>
+        <div class="pill" data-region="cn">🇨🇳 CN</div>
+        <div class="pill" data-region="default">🌍 Default</div>
+      </div>
+    </div>
+
+    <!-- АВТОПРИНЯТИЕ -->
+    <div class="section">
+      <div class="section-title">Автопринятие</div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Включить автопринятие</div>
+          <div class="toggle-sub">Баннер закроется без действия пользователя</div>
+        </div>
+        <div class="toggle" id="toggle-autohide" onclick="toggleAutoHide(this)"></div>
+      </div>
+      <div class="slider-row" id="slider-row">
+        <label>Задержка: <span id="delay-val">8</span> сек</label>
+        <input type="range" id="delay-slider" min="3" max="30" value="8" oninput="updateDelay(this.value)">
+      </div>
+    </div>
+
+    <!-- ТЕМА -->
+    <div class="section">
+      <div class="section-title">Цветовая схема</div>
+      <div class="theme-options">
+        <div class="theme-opt active" data-theme="dark" onclick="setTheme('dark', this)">
+          <div class="theme-swatch" style="background:#1a1a1a"></div>
+          <div class="theme-opt-label">Тёмная</div>
+        </div>
+        <div class="theme-opt" data-theme="light" onclick="setTheme('light', this)">
+          <div class="theme-swatch" style="background:#ffffff"></div>
+          <div class="theme-opt-label">Светлая</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- АКЦЕНТНЫЙ ЦВЕТ -->
+    <div class="section">
+      <div class="section-title">Акцентный цвет</div>
+      <div class="accent-grid">
+        <div class="accent-swatch active" data-color="#c8f135" style="background:#c8f135" title="Lime"
+             onclick="setAccent('#c8f135', this)"></div>
+        <div class="accent-swatch" data-color="#00d4ff" style="background:#00d4ff" title="Cyan"
+             onclick="setAccent('#00d4ff', this)"></div>
+        <div class="accent-swatch" data-color="#ff6b2b" style="background:#ff6b2b" title="Orange"
+             onclick="setAccent('#ff6b2b', this)"></div>
+        <div class="accent-swatch" data-color="#e040fb" style="background:#e040fb" title="Violet"
+             onclick="setAccent('#e040fb', this)"></div>
+        <div class="accent-swatch" data-color="#ff3d9a" style="background:#ff3d9a" title="Pink"
+             onclick="setAccent('#ff3d9a', this)"></div>
+        <div class="accent-swatch" data-color="#ffffff" style="background:#fff;border:1px solid #333" title="White"
+             onclick="setAccent('#ffffff', this)"></div>
+        <div class="accent-custom">
+          <input type="color" id="colorPicker" value="#c8f135" oninput="setAccentFromPicker(this.value)">
+          <input type="text" class="accent-hex" id="hexInput" value="#c8f135" maxlength="7"
+                 oninput="setAccentFromHex(this.value)" placeholder="#c8f135">
+        </div>
+      </div>
+    </div>
+
+    <!-- ПОЗИЦИЯ -->
+    <div class="section">
+      <div class="section-title">Позиция</div>
+      <div class="pos-grid">
+        <div class="pos-opt active" data-pos="bottom-right" onclick="setPos('bottom-right', this)">↘ Правый низ</div>
+        <div class="pos-opt"       data-pos="bottom-left"  onclick="setPos('bottom-left',  this)">↙ Левый низ</div>
+        <div class="pos-opt wide"  data-pos="bottom-center" onclick="setPos('bottom-center', this)">↓ По центру</div>
+      </div>
+    </div>
+
+    <!-- PRIVACY URL -->
+    <div class="section">
+      <div class="section-title">Ссылка на политику</div>
+      <input type="text" class="url-input" id="privacyUrl" value="/privacy"
+             oninput="updatePrivacyUrl(this.value)" placeholder="/privacy">
+    </div>
+
+  </div><!-- /left -->
+
+  <!-- ══════ RIGHT: PREVIEW + CODE ══════ -->
+  <div class="right">
+
+    <!-- PREVIEW -->
+    <div class="preview-wrap" id="previewWrap">
+      <div class="preview-label">Превью</div>
+
+      <div class="browser-mock">
+        <div class="browser-bar">
+          <div class="browser-dots">
+            <div class="browser-dot"></div>
+            <div class="browser-dot"></div>
+            <div class="browser-dot"></div>
+          </div>
+          <div class="browser-url">yourwebsite.com</div>
+        </div>
+        <div class="browser-content" id="browserContent">
+          <!-- Fake page lines -->
+          <div class="page-lines">
+            <div class="pl" style="width:60%"></div>
+            <div class="pl" style="width:90%"></div>
+            <div class="pl" style="width:75%"></div>
+            <div class="pl" style="width:50%"></div>
+            <div class="pl" style="width:85%"></div>
+            <div class="pl" style="width:40%"></div>
+            <div class="pl" style="width:70%"></div>
+            <div class="pl" style="width:95%"></div>
+            <div class="pl" style="width:60%"></div>
+            <div class="pl" style="width:80%"></div>
+          </div>
+
+          <!-- Banner preview (static, non-fixed) -->
+          <div id="preview-banner" class="pos-br"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CODE -->
+    <div class="code-section">
+      <div class="code-header">
+        <div class="code-title">Код вставки</div>
+        <button class="copy-btn" id="copyBtn" onclick="copyCode()">Копировать</button>
+      </div>
+      <div class="code-body" id="codeOutput"></div>
+    </div>
+
+  </div><!-- /right -->
+</div><!-- /layout -->
+
+<script>
+/* ── STATE ── */
+var state = {
+  region:      'ru',
+  autoHide:    false,
+  delay:       8,
+  theme:       'dark',
+  accentColor: '#c8f135',
+  position:    'bottom-right',
+  privacyUrl:  '/privacy',
+};
+
+/* ── REGION DATA (mirrors library) ── */
+var MESSAGES = {
+  ru: { title:'Файлы cookie', message:'Сайт использует файлы cookie. Подробности — в <a href="{url}">соглашении</a>.', btnAccept:'Принять', btnDecline:null, badge:null, detail:null },
+  eu: { title:'Управление куки (GDPR)', message:'Мы используем файлы cookie для аналитики и персонализации.', btnAccept:'Принять все', btnDecline:'Только необходимые', badge:'GDPR', detail:'По GDPR вы вправе отозвать согласие через <a href="{url}">политику</a>.' },
+  us: { title:'Cookie Notice', message:'We use cookies for analytics. See our <a href="{url}">Privacy Policy</a>.', btnAccept:'Got it', btnDecline:'Do Not Sell My Info', badge:'CCPA', detail:null },
+  cn: { title:'Cookie 通知', message:'本站使用 Cookie。详见<a href="{url}">隐私政策</a>。', btnAccept:'接受', btnDecline:null, badge:null, detail:null },
+  'default': { title:'Cookie Policy', message:'This site uses cookies to improve your experience. <a href="{url}">Learn more</a>.', btnAccept:'Accept', btnDecline:'Decline', badge:null, detail:null },
+};
+
+/* ── COLOR UTILS ── */
+function hexToRgb(hex) {
+  hex = hex.replace('#','');
+  if (hex.length===3) hex=hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+  var n = parseInt(hex,16);
+  return [(n>>16)&255,(n>>8)&255,n&255];
+}
+function luminance(hex) {
+  try {
+    var rgb = hexToRgb(hex);
+    var vals = rgb.map(function(c){ c/=255; return c<=0.03928?c/12.92:Math.pow((c+0.055)/1.055,2.4); });
+    return 0.2126*vals[0]+0.7152*vals[1]+0.0722*vals[2];
+  } catch(_){ return 1; }
+}
+function accentText(hex) { return luminance(hex)>0.35?'#0f0f0f':'#ffffff'; }
+function darken(hex,a) {
+  try {
+    var rgb=hexToRgb(hex);
+    return '#'+rgb.map(function(c){return ('0'+Math.max(0,c-a).toString(16)).slice(-2);}).join('');
+  } catch(_){return hex;}
+}
+function alphaRgb(hex,a) {
+  try { var r=hexToRgb(hex); return 'rgba('+r[0]+','+r[1]+','+r[2]+','+a+')'; }
+  catch(_){return hex;}
+}
+
+/* ── RENDER PREVIEW BANNER ── */
+function renderPreview() {
+  var msg   = MESSAGES[state.region] || MESSAGES['default'];
+  var dark  = state.theme==='dark';
+  var acc   = state.accentColor;
+  var accT  = accentText(acc);
+  var accD  = darken(acc,20);
+  var url   = state.privacyUrl;
+
+  var surface    = dark ? '#1c1c1c'  : '#ffffff';
+  var borderCol  = dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+  var textCol    = dark ? '#e0e0e0'  : '#111';
+  var mutedCol   = dark ? '#888'     : '#666';
+  var btn2bg     = dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+  var detailBg   = dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)';
+
+  var badge = msg.badge
+    ? '<div class="pv-badge" style="background:'+alphaRgb(acc,0.12)+';border:1px solid '+alphaRgb(acc,0.25)+';color:'+acc+'">'+msg.badge+'</div>'
+    : '';
+
+  var detail = msg.detail
+    ? '<div class="pv-detail" style="background:'+detailBg+';border-left-color:'+alphaRgb(acc,0.4)+';color:'+mutedCol+'">'+msg.detail.replace('{url}',url)+'</div>'
+    : '';
+
+  var btnDecline = msg.btnDecline
+    ? '<div class="pv-btn" style="background:'+btn2bg+';color:'+mutedCol+';border:1px solid '+borderCol+'">'+msg.btnDecline+'</div>'
+    : '';
+
+  var html =
+    '<style>.pv-msg a, .pv-detail a {color: '+acc+'}</style>'
+    +'<div class="pv-card" style="background:'+surface+';border-color:'+borderCol+';">'
+    + '<div style="position:relative">'
+    + '<div class="pv-head">'
+    +   '<div class="pv-ico" style="background:'+acc+'">'
+    +     '<svg viewBox="0 0 24 24" fill="none" stroke="'+accT+'" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4m0 4h.01"/></svg>'
+    +   '</div>'
+    +   '<div class="pv-title" style="color:'+textCol+'">'+msg.title+'</div>'
+    +   badge
+    + '</div>'
+    + '<div class="pv-msg" style="color:'+mutedCol+'">'+msg.message.replace('{url}',url)+'</div>'
+    + detail
+    + '<div class="pv-btns">'
+    +   btnDecline
+    +   '<div class="pv-btn" style="background:'+acc+';color:'+accT+'">'+msg.btnAccept+'</div>'
+    + '</div>'
+    + (state.autoHide ? '<div class="pv-bar" style="background:'+acc+'"></div>' : '')
+    + '</div>'
+    + '</div>';
+
+  var banner = document.getElementById('preview-banner');
+
+  // Position class
+  banner.className = '';
+  var posClass = {
+    'bottom-right': 'pos-br',
+    'bottom-left':  'pos-bl',
+    'bottom-center':'pos-bc',
+  }[state.position] || 'pos-br';
+  banner.classList.add(posClass);
+
+  // Re-trigger animation
+  banner.classList.remove('visible');
+  banner.innerHTML = html;
+
+  setTimeout(function(){ banner.classList.add('visible'); }, 60);
+}
+
+/* ── CODE GENERATOR ── */
+function generateCode() {
+  var lines = [];
+  var hasConfig = (
+    state.autoHide ||
+    state.theme !== 'dark' ||
+    state.accentColor !== '#c8f135' ||
+    state.position !== 'bottom-right' ||
+    state.privacyUrl !== '/privacy'
+  );
+
+  if (hasConfig) {
+    lines.push('<span class="ck">&lt;script&gt;</span>');
+    lines.push('  <span class="cn">window</span>.<span class="cn">GeoConsentConfig</span> = {');
+    if (state.autoHide)
+      lines.push('    <span class="cn">autoHide</span>:    <span class="cv">'+(state.delay*1000)+'</span>,  <span class="cc">// мс до автопринятия</span>');
+    else
+      lines.push('    <span class="cn">autoHide</span>:    <span class="cv">false</span>,         <span class="cc">// автопринятие отключено</span>');
+    if (state.theme !== 'dark')
+      lines.push('    <span class="cn">theme</span>:       <span class="cs">\'' + state.theme + '\'</span>,');
+    if (state.accentColor !== '#c8f135')
+      lines.push('    <span class="cn">accentColor</span>: <span class="cs">\'' + state.accentColor + '\'</span>,');
+    if (state.position !== 'bottom-right')
+      lines.push('    <span class="cn">position</span>:    <span class="cs">\'' + state.position + '\'</span>,');
+    if (state.privacyUrl !== '/privacy')
+      lines.push('    <span class="cn">privacyUrl</span>:  <span class="cs">\'' + state.privacyUrl + '\'</span>,');
+    lines.push('  };');
+    lines.push('<span class="ck">&lt;/script&gt;</span>');
+    lines.push('');
+  }
+
+  lines.push('<span class="ck">&lt;script </span><span class="cn">src</span>=<span class="cs">"cookie-consent.js"</span><span class="ck">&gt;&lt;/script&gt;</span>');
+
+  document.getElementById('codeOutput').innerHTML = lines.join('\n');
+}
+
+/* ── CONTROLS ── */
+function setRegion(region) {
+  state.region = region;
+  document.querySelectorAll('[data-region]').forEach(function(el){
+    el.classList.toggle('active', el.dataset.region === region);
+  });
+  renderPreview();
+}
+
+function toggleAutoHide(el) {
+  state.autoHide = !state.autoHide;
+  el.classList.toggle('on', state.autoHide);
+  document.getElementById('slider-row').classList.toggle('visible', state.autoHide);
+  renderPreview(); generateCode();
+}
+
+function updateDelay(val) {
+  state.delay = parseInt(val);
+  document.getElementById('delay-val').textContent = val;
+  generateCode();
+}
+
+function setTheme(theme, el) {
+  state.theme = theme;
+  document.querySelectorAll('[data-theme]').forEach(function(e){ e.classList.remove('active'); });
+  el.classList.add('active');
+  renderPreview(); generateCode();
+}
+
+function setAccent(color, el) {
+  state.accentColor = color;
+  document.querySelectorAll('.accent-swatch').forEach(function(e){ e.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  document.getElementById('hexInput').value = color;
+  document.getElementById('colorPicker').value = color;
+  renderPreview(); generateCode();
+}
+
+function setAccentFromPicker(color) {
+  document.querySelectorAll('.accent-swatch').forEach(function(e){ e.classList.remove('active'); });
+  document.getElementById('hexInput').value = color;
+  state.accentColor = color;
+  renderPreview(); generateCode();
+}
+
+function setAccentFromHex(val) {
+  if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+    document.getElementById('colorPicker').value = val;
+    setAccent(val, null);
+  }
+}
+
+function setPos(pos, el) {
+  state.position = pos;
+  document.querySelectorAll('[data-pos]').forEach(function(e){ e.classList.remove('active'); });
+  el.classList.add('active');
+  renderPreview(); generateCode();
+}
+
+function updatePrivacyUrl(val) {
+  state.privacyUrl = val || '/privacy';
+  renderPreview(); generateCode();
+}
+
+function copyCode() {
+  var lines = [];
+  var hasConfig = (
+    state.autoHide ||
+    state.theme !== 'dark' ||
+    state.accentColor !== '#c8f135' ||
+    state.position !== 'bottom-right' ||
+    state.privacyUrl !== '/privacy'
+  );
+
+  if (hasConfig) {
+    lines.push('<script>');
+    lines.push('  window.GeoConsentConfig = {');
+    lines.push('    autoHide:    ' + (state.autoHide ? state.delay*1000 : 'false') + ',');
+    if (state.theme !== 'dark')       lines.push("    theme:       '" + state.theme + "',");
+    if (state.accentColor !== '#c8f135') lines.push("    accentColor: '" + state.accentColor + "',");
+    if (state.position !== 'bottom-right') lines.push("    position:    '" + state.position + "',");
+    if (state.privacyUrl !== '/privacy')   lines.push("    privacyUrl:  '" + state.privacyUrl + "',");
+    lines.push('  };');
+    lines.push('<\/script>');
+    lines.push('');
+  }
+  lines.push('<script src="cookie-consent.js"><\/script>');
+
+  navigator.clipboard.writeText(lines.join('\n')).then(function() {
+    var btn = document.getElementById('copyBtn');
+    btn.textContent = '✓ Скопировано';
+    btn.classList.add('copied');
+    setTimeout(function(){ btn.textContent='Копировать'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+/* ── REGION PILL CLICK HANDLERS ── */
+document.querySelectorAll('[data-region]').forEach(function(el) {
+  el.addEventListener('click', function(){ setRegion(el.dataset.region); });
+});
+
+/* ── INIT ── */
+renderPreview();
+generateCode();
+</script>
+</body>
+</html>
